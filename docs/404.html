@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="refresh" content="0; url=/?p=" />
+  <script>
+    // Redirect /v/XXXX -> /?p=/v/XXXX
+    var l = window.location;
+    var target = "/?p=" + encodeURIComponent(l.pathname + l.search + l.hash);
+    window.location.replace(target);
+  </script>
+</head>
+<body></body>
+</html>

@@ -1,0 +1,26 @@
+:root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+body { margin: 0; background: #0b0d12; color: #e8eaf0; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
+.top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; }
+.brand { font-weight: 800; letter-spacing: 0.5px; font-size: 20px; }
+.tag { opacity: 0.7; }
+
+.card { background:#121622; border:1px solid #222a3d; border-radius:16px; padding:16px; }
+.status { padding:10px 12px; border-radius:12px; margin-bottom:12px; background:#0f1320; border:1px solid #222a3d; }
+.status[data-kind="good"] { border-color:#2d5; }
+.status[data-kind="bad"] { border-color:#f55; }
+
+.thumbWrap { background:#0f1320; border:1px solid #222a3d; border-radius:16px; overflow:hidden; }
+.thumbWrap img { width:100%; display:block; }
+
+.meta { margin-top: 12px; display:grid; gap:8px; }
+.row { display:flex; justify-content:space-between; gap:12px; padding:10px 12px; background:#0f1320; border:1px solid #222a3d; border-radius:12px; }
+.row span { opacity:0.75; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+.details { margin-top: 12px; }
+.raw { white-space: pre-wrap; word-break: break-word; background:#0f1320; border:1px solid #222a3d; border-radius:12px; padding:12px; overflow:auto; }
+
+.foot { margin-top: 18px; opacity:0.7; display:flex; gap:10px; align-items:center; }
+.foot a { color:#b7c7ff; text-decoration:none; }
+.sep { opacity:0.4; }

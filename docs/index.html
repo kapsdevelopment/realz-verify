@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Realz Verify</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div class="brand">Realz</div>
+      <div class="tag">Verify</div>
+    </header>
+
+    <section class="card">
+      <div id="status" class="status">Laster…</div>
+
+      <div class="thumbWrap">
+        <img id="thumb" alt="Thumbnail" />
+      </div>
+
+      <div class="meta">
+        <div class="row"><span>Proof ID</span><code id="proofId">-</code></div>
+        <div class="row"><span>Trust</span><code id="trust">-</code></div>
+        <div class="row"><span>Captured</span><code id="capturedAt">-</code></div>
+        <div class="row"><span>Key</span><code id="keyId">-</code></div>
+      </div>
+
+      <details class="details">
+        <summary>Detaljer</summary>
+        <pre id="raw" class="raw"></pre>
+      </details>
+    </section>
+
+    <footer class="foot">
+      <span>© Realz</span>
+      <span class="sep">•</span>
+      <a href="/" rel="nofollow">Hjem</a>
+    </footer>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
