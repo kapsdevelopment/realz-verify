@@ -85,7 +85,7 @@ async function fetchVerify(proofId) {
     return;
   }
 
-  const trust = data?.trust || "verified";
+  const trust = data?.trust || "unknown";
   safeSetText("trust", trust);
   safeSetText("capturedAt", formatUtc(data?.captured_at_utc));
   safeSetText("keyId", data?.crypto?.key_id ?? "-");
