@@ -85,19 +85,20 @@ async function fetchVerify(proofId) {
     return;
   }
 
-  const trust = data?.trust || "unknown";
-  safeSetText("trust", trust);
-  safeSetText("capturedAt", formatUtc(data?.captured_at_utc));
-  safeSetText("keyId", data?.crypto?.key_id ?? "-");
+const trust = data?.trust || "unknown";
+safeSetText("trust", trust === "verified" ? "Verified" : "Not verified");
+safeSetText("capturedAt", formatUtc(data?.captured_at_utc));
+// keyId kan nå være fjernet fra HTML – safeSetText tåler det hvis du gjorde den robust
+safeSetText("keyId", data?.crypto?.key_id ?? "-");
 
-  const img = document.getElementById("thumb");
-  const thumbUrl = data?.thumb?.url;
-  if (thumbUrl) {
+const img = document.getElementById("thumb");
+const thumbUrl = data?.thumb?.url;
+if (thumbUrl) {
   img.src = thumbUrl;
   img.style.display = "block";
-  } else {
+} else {
   img.style.display = "none";
-  }
+}
 
 if (trust === "verified") {
   setStatus("✅ Realz-verified", "good");
