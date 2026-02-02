@@ -30,14 +30,10 @@ function safeSetText(id, value) {
 }
 
 async function fetchVerify(proofId) {
-  // POST eller GET – velg én og match i Edge Function
-  const res = await fetch(VERIFY_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ proof_id: proofId })
-  });
+  const url = `${VERIFY_ENDPOINT}?proof_id=${encodeURIComponent(proofId)}`;
 
-  // public endpoint: returner kontrollert error payload
+  const res = await fetch(url, { method: "GET" });
+
   const data = await res.json().catch(() => null);
   return { ok: res.ok, status: res.status, data };
 }
@@ -61,22 +57,24 @@ async function fetchVerify(proofId) {
   // data = { trust, captured_at, key_id, thumb_url, metadata, proof, signature }
   if (!ok) {
     setStatus(`Ikke verifisert (${status})`, "bad");
-    safeSetText("trust", data?.trust ?? "not_verified");
+    setStatus(`Ikke verifisert (${status})`, "bad");
+    safeSetText("trust", data?.trust ?? "unknown");
     document.getElementById("raw").textContent = JSON.stringify(data, null, 2) || "";
     return;
   }
 
   const trust = data?.trust || "verified";
   safeSetText("trust", trust);
-  safeSetText("capturedAt", data?.captured_at || "-");
-  safeSetText("keyId", data?.key_id || "-");
+  safeSetText("capturedAt", data?.captured_at_utc ?? "-");
+  safeSetText("keyId", data?.crypto?.key_id ?? "-");
 
   const img = document.getElementById("thumb");
-  if (data?.thumb_url) {
-    img.src = data.thumb_url;
-    img.style.display = "block";
+  const thumbUrl = data?.thumb?.url;
+  if (thumbUrl) {
+  img.src = thumbUrl;
+  img.style.display = "block";
   } else {
-    img.style.display = "none";
+  img.style.display = "none";
   }
 
   if (trust === "verified") setStatus("✅ Realz-verified", "good");
