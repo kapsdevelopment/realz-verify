@@ -99,8 +99,6 @@ async function fetchVerify(proofId) {
   img.style.display = "none";
   }
 
-const trust = data?.trust || "unknown";
-
 if (trust === "verified") {
   setStatus("✅ Realz-verified", "good");
   setSubtitle("This image matches a cryptographic proof created at capture time.");
