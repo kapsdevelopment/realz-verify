@@ -10,6 +10,12 @@ body { margin: 0; background: #0b0d12; color: #e8eaf0; }
 .status[data-kind="good"] { border-color:#2d5; }
 .status[data-kind="bad"] { border-color:#f55; }
 
+.subtitle {
+  margin-top: 10px;
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
 .thumbWrap { background:#0f1320; border:1px solid #222a3d; border-radius:16px; overflow:hidden; }
 .thumbWrap img { width:100%; display:block; }
 

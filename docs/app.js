@@ -12,6 +12,25 @@ function getProofIdFromPath(pathname) {
   return null;
 }
 
+function formatUtc(iso) {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
+
+function setSubtitle(text) {
+  const el = document.getElementById("subtitle");
+  if (!el) return;
+  el.textContent = text || "";
+}
+
 function getRequestedPath() {
   // hvis vi kom via 404-rewrite: /?p=/v/XXXX
   const p = new URLSearchParams(window.location.search).get("p");
@@ -26,7 +45,9 @@ function setStatus(text, kind) {
 }
 
 function safeSetText(id, value) {
-  document.getElementById(id).textContent = value ?? "-";
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = value ?? "-";
 }
 
 async function fetchVerify(proofId) {
@@ -59,13 +80,14 @@ async function fetchVerify(proofId) {
     setStatus(`Ikke verifisert (${status})`, "bad");
     setStatus(`Ikke verifisert (${status})`, "bad");
     safeSetText("trust", data?.trust ?? "unknown");
+    setSubtitle("Realz can’t confirm this proof right now.");
     document.getElementById("raw").textContent = JSON.stringify(data, null, 2) || "";
     return;
   }
 
   const trust = data?.trust || "verified";
   safeSetText("trust", trust);
-  safeSetText("capturedAt", data?.captured_at_utc ?? "-");
+  safeSetText("capturedAt", formatUtc(data?.captured_at_utc));
   safeSetText("keyId", data?.crypto?.key_id ?? "-");
 
   const img = document.getElementById("thumb");
@@ -77,8 +99,26 @@ async function fetchVerify(proofId) {
   img.style.display = "none";
   }
 
-  if (trust === "verified") setStatus("✅ Realz-verified", "good");
-  else setStatus("❌ Ikke verifisert", "bad");
+const trust = data?.trust || "unknown";
+
+if (trust === "verified") {
+  setStatus("✅ Realz-verified", "good");
+  setSubtitle("This image matches a cryptographic proof created at capture time.");
+} else {
+  setStatus("⚠️ Could not verify", "bad");
+
+  const reason = data?.reason_code;
+  // MVP: hold det menneskelig, men litt konkret
+  const msg =
+    reason === "PROOF_NOT_FOUND" ? "This proof ID doesn’t exist." :
+    reason === "THUMB_UNAVAILABLE" ? "Thumbnail is unavailable right now." :
+    reason === "SIGNATURE_INVALID" ? "The proof signature didn’t verify." :
+    reason === "KEY_INACTIVE" ? "The signing key is no longer active." :
+    reason ? "Realz can’t confirm this proof right now." :
+    "Realz can’t confirm this proof right now.";
+
+  setSubtitle(msg);
+}
 
   document.getElementById("raw").textContent = JSON.stringify(data, null, 2) || "";
 })();
