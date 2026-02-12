@@ -1,5 +1,4 @@
 // 1) Sett dette til din Supabase URL
-//    (kan også injectes via a) build step, b) window.__ENV, c) hardcode for MVP)
 const SUPABASE_URL = "https://fikpcphonyjqbwibovyk.supabase.co";
 
 // 2) Edge function endpoint
@@ -25,23 +24,11 @@ function formatUtc(iso) {
   });
 }
 
-function setSubtitle(text) {
-  const el = document.getElementById("subtitle");
-  if (!el) return;
-  el.textContent = text || "";
-}
-
 function getRequestedPath() {
   // hvis vi kom via 404-rewrite: /?p=/v/XXXX
   const p = new URLSearchParams(window.location.search).get("p");
   if (p) return decodeURIComponent(p);
   return window.location.pathname;
-}
-
-function setStatus(text, kind) {
-  const el = document.getElementById("status");
-  el.textContent = text;
-  el.dataset.kind = kind || "info";
 }
 
 function safeSetText(id, value) {
@@ -50,74 +37,166 @@ function safeSetText(id, value) {
   el.textContent = value ?? "-";
 }
 
+function setSubtitle(text) {
+  const el = document.getElementById("subtitle");
+  if (!el) return;
+  el.textContent = text || "";
+}
+
+function setBadge(text, kind) {
+  const el = document.getElementById("badge");
+  if (!el) return;
+  el.textContent = text;
+  el.dataset.kind = kind || "info";
+}
+
+function setStatus(title, kind, hint) {
+  const el = document.getElementById("status");
+  if (!el) return;
+  el.dataset.kind = kind || "info";
+  el.innerHTML = `
+    <div class="statusText">
+      <strong>${escapeHtml(title)}</strong>
+      <small>${escapeHtml(hint || "")}</small>
+    </div>
+  `;
+}
+
+function setThumbOverlay(kind, text) {
+  const overlay = document.getElementById("thumbOverlay");
+  const pill = document.getElementById("verifyPill");
+  const pillText = document.getElementById("verifyPillText");
+  if (!overlay || !pill || !pillText) return;
+
+  overlay.hidden = false;
+  pill.dataset.kind = kind || "info";
+  pillText.textContent = text || "";
+}
+
+function hideThumbOverlay() {
+  const overlay = document.getElementById("thumbOverlay");
+  if (overlay) overlay.hidden = true;
+}
+
+function setThumbLoading(isLoading) {
+  const wrap = document.getElementById("thumbWrap");
+  if (!wrap) return;
+  wrap.classList.toggle("is-loading", !!isLoading);
+}
+
+function showThumb(show) {
+  const wrap = document.getElementById("thumbWrap");
+  if (!wrap) return;
+  wrap.style.display = show ? "block" : "none";
+}
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 async function fetchVerify(proofId) {
   const url = `${VERIFY_ENDPOINT}?proof_id=${encodeURIComponent(proofId)}`;
-
   const res = await fetch(url, { method: "GET" });
-
   const data = await res.json().catch(() => null);
   return { ok: res.ok, status: res.status, data };
 }
 
+// Mapper reason_code -> menneskelig tekst
+function humanReason(reason) {
+  return (
+    (reason === "PROOF_NOT_FOUND" && "This proof ID doesn’t exist.") ||
+    (reason === "THUMB_UNAVAILABLE" && "Thumbnail is unavailable right now.") ||
+    (reason === "SIGNATURE_INVALID" && "The proof signature didn’t verify.") ||
+    (reason === "KEY_INACTIVE" && "The signing key is no longer active.") ||
+    "Realz can’t confirm this proof right now."
+  );
+}
+
 (async function init() {
+  // initial UI (skeleton)
+  setBadge("Verifying", "info");
+  setStatus("Verifiserer…", "info", "Checking cryptographic proof");
+  setSubtitle("");
+  setThumbLoading(true);
+  hideThumbOverlay();
+  showThumb(true);
+
   const requestedPath = getRequestedPath();
   const proofId = getProofIdFromPath(new URL(requestedPath, window.location.origin).pathname);
 
   if (!proofId) {
-    setStatus("Ugyldig verify-lenke", "bad");
+    setBadge("INVALID", "bad");
+    setStatus("Ugyldig verify-lenke", "bad", "Missing or malformed proof id");
+    setSubtitle("Sjekk at lenken ser ut som /v/{proof_id}");
     safeSetText("proofId", "-");
+    safeSetText("capturedAt", "-");
+    safeSetText("trust", "Invalid");
+    showThumb(false);
+    document.getElementById("raw").textContent = "";
     return;
   }
 
   safeSetText("proofId", proofId);
-  setStatus("Verifiserer…", "info");
 
   const { ok, status, data } = await fetchVerify(proofId);
 
-  // Du bestemmer kontrakten – dette er en foreslått shape:
-  // data = { trust, captured_at, key_id, thumb_url, metadata, proof, signature }
+  // Fyll raw uansett (hjelper debugging)
+  document.getElementById("raw").textContent = JSON.stringify(data, null, 2) || "";
+
+  // thumb
+  const img = document.getElementById("thumb");
+  const thumbUrl = data?.thumb?.url;
+
+  if (thumbUrl) {
+    img.onload = () => setThumbLoading(false);
+    img.onerror = () => setThumbLoading(false);
+    img.src = thumbUrl;
+    showThumb(true);
+  } else {
+    // ingen thumb -> skjul hero helt, så siden ser “ferdig” ut
+    setThumbLoading(false);
+    showThumb(false);
+  }
+
   if (!ok) {
-    setStatus(`Ikke verifisert (${status})`, "bad");
-    setStatus(`Ikke verifisert (${status})`, "bad");
-    safeSetText("trust", data?.trust ?? "unknown");
-    setSubtitle("Realz can’t confirm this proof right now.");
-    document.getElementById("raw").textContent = JSON.stringify(data, null, 2) || "";
+    setBadge("NOT VERIFIED", "bad");
+    setStatus("⚠️ Could not verify", "bad", `Server responded ${status}`);
+    safeSetText("trust", data?.trust ?? "Not verified");
+    safeSetText("capturedAt", formatUtc(data?.captured_at_utc));
+
+    const msg = humanReason(data?.reason_code);
+    setSubtitle(msg);
+
+    // Hvis du vil: vis en pill selv om thumb mangler (valgfritt)
+    if (thumbUrl) setThumbOverlay("bad", "VERIFICATION FAILED");
     return;
   }
 
-const trust = data?.trust || "unknown";
-safeSetText("trust", trust === "verified" ? "Verified" : "Not verified");
-safeSetText("capturedAt", formatUtc(data?.captured_at_utc));
-// keyId kan nå være fjernet fra HTML – safeSetText tåler det hvis du gjorde den robust
-safeSetText("keyId", data?.crypto?.key_id ?? "-");
+  const trust = data?.trust || "unknown";
+  const captured = formatUtc(data?.captured_at_utc);
 
-const img = document.getElementById("thumb");
-const thumbUrl = data?.thumb?.url;
-if (thumbUrl) {
-  img.src = thumbUrl;
-  img.style.display = "block";
-} else {
-  img.style.display = "none";
-}
+  safeSetText("capturedAt", captured);
 
-if (trust === "verified") {
-  setStatus("✅ Realz-verified", "good");
-  setSubtitle("This image matches a cryptographic proof created at capture time.");
-} else {
-  setStatus("⚠️ Could not verify", "bad");
+  if (trust === "verified") {
+    setBadge("VERIFIED", "good");
+    setStatus("✅ Realz-verified", "good", "Proof matches capture-time signature");
+    safeSetText("trust", "Verified");
+    setSubtitle("This image matches a cryptographic proof created at capture time.");
 
-  const reason = data?.reason_code;
-  // MVP: hold det menneskelig, men litt konkret
-  const msg =
-    reason === "PROOF_NOT_FOUND" ? "This proof ID doesn’t exist." :
-    reason === "THUMB_UNAVAILABLE" ? "Thumbnail is unavailable right now." :
-    reason === "SIGNATURE_INVALID" ? "The proof signature didn’t verify." :
-    reason === "KEY_INACTIVE" ? "The signing key is no longer active." :
-    reason ? "Realz can’t confirm this proof right now." :
-    "Realz can’t confirm this proof right now.";
+    if (thumbUrl) setThumbOverlay("good", "VERIFIED");
+  } else {
+    setBadge("NOT VERIFIED", "bad");
+    setStatus("⚠️ Could not verify", "bad", "Realz can’t confirm this proof right now");
+    safeSetText("trust", "Not verified");
 
-  setSubtitle(msg);
-}
+    const msg = humanReason(data?.reason_code);
+    setSubtitle(msg);
 
-  document.getElementById("raw").textContent = JSON.stringify(data, null, 2) || "";
+    if (thumbUrl) setThumbOverlay("bad", "NOT VERIFIED");
+  }
 })();

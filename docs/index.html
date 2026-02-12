@@ -2,31 +2,72 @@
 <html lang="no">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
   <title>Realz Verify</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <main class="wrap">
     <header class="top">
-      <div class="brand">Realz</div>
-      <div class="tag">Verify</div>
-    </header>
+      <div class="brandRow">
 
-    <section class="card">
-      <div id="status" class="status">Laster…</div>
-      <div id="subtitle" class="subtitle"></div>
-
-
-      <div class="thumbWrap">
-        <img id="thumb" alt="Thumbnail" />
+      <div class="logo">
+        <img
+          src="/assets/launcher_icon_android_set_bg_121924.png"
+          alt="Realz logo"
+          width="40"
+          height="40"
+          loading="eager"
+          decoding="async"
+        />
       </div>
 
-      <div class="meta">
-        <div class="row"><span>Proof ID</span><code id="proofId">-</code></div>
-        <div class="row"><span>Trust</span><code id="trust">-</code></div>
-        <div class="row"><span>Captured</span><code id="capturedAt">-</code></div>
-<!---   <div class="row"><span>Key</span><code id="keyId">-</code></div> -->
+        <div class="wordmark">
+          <div class="name">Realz</div>
+          <div class="sub">Verify</div>
+        </div>
+      </div>
+
+      <div id="badge" class="badge" data-kind="info">Verifying</div>
+    </header>
+
+    <section class="card" aria-live="polite">
+      <div id="status" class="status" data-kind="info">
+        <div class="statusText">
+          <strong>Verifiserer…</strong>
+          <small>Checking cryptographic proof</small>
+        </div>
+      </div>
+
+      <div id="subtitle" class="subtitle"></div>
+
+      <div class="thumbWrap is-loading" id="thumbWrap">
+        <div class="thumbSkeleton" aria-hidden="true"></div>
+
+        <img id="thumb" alt="Thumbnail" loading="lazy" decoding="async" />
+
+        <!-- App-aktig overlay-knapp -->
+        <div id="thumbOverlay" class="thumbOverlay" hidden>
+          <div class="verifyPill" id="verifyPill" data-kind="info">
+            <span class="pillIcon" aria-hidden="true">✓</span>
+            <span id="verifyPillText">VERIFIED</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="meta" id="meta">
+        <div class="row">
+          <span>Proof ID</span>
+          <code id="proofId">-</code>
+        </div>
+        <div class="row">
+          <span>Captured</span>
+          <code id="capturedAt">-</code>
+        </div>
+        <div class="row">
+          <span>Status</span>
+          <code id="trust">-</code>
+        </div>
       </div>
 
       <details class="details">
