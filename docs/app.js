@@ -109,6 +109,7 @@ async function fetchVerify(proofId) {
 // Mapper reason_code -> menneskelig tekst
 function humanReason(reason) {
   return (
+    (reason === "DELETED_BY_OWNER" && "This proof was deleted by its owner.") ||
     (reason === "PROOF_NOT_FOUND" && "This proof ID doesn’t exist.") ||
     (reason === "THUMB_UNAVAILABLE" && "Thumbnail is unavailable right now.") ||
     (reason === "SIGNATURE_INVALID" && "The proof signature didn’t verify.") ||
@@ -127,7 +128,9 @@ function humanReason(reason) {
   showThumb(true);
 
   const requestedPath = getRequestedPath();
-  const proofId = getProofIdFromPath(new URL(requestedPath, window.location.origin).pathname);
+  const proofId = getProofIdFromPath(
+    new URL(requestedPath, window.location.origin).pathname
+  );
 
   if (!proofId) {
     setBadge("INVALID", "bad");
@@ -161,6 +164,24 @@ function humanReason(reason) {
     // ingen thumb -> skjul hero helt, så siden ser “ferdig” ut
     setThumbLoading(false);
     showThumb(false);
+  }
+
+  // --- Tombstone: deleted by owner ---
+  // Handle this early so it never looks like a system failure.
+  if (data?.reason_code === "DELETED_BY_OWNER") {
+    setBadge("DELETED", "bad");
+    setStatus("Deleted by owner", "bad", "This proof was intentionally removed");
+
+    safeSetText("trust", "Deleted");
+    safeSetText("capturedAt", formatUtc(data?.revoked_at_utc)); // <-- tombstone timestamp
+
+    setSubtitle("The owner of this image has deleted the proof.");
+
+    hideThumbOverlay();
+    showThumb(false);
+    setThumbLoading(false);
+
+    return;
   }
 
   if (!ok) {
