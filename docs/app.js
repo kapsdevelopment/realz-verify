@@ -31,6 +31,10 @@ function getRequestedPath() {
   return window.location.pathname;
 }
 
+function buildCanonicalVerifyUrl(requestedPath) {
+  return new URL(requestedPath, window.location.origin).toString();
+}
+
 function safeSetText(id, value) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -84,6 +88,20 @@ function setThumbLoading(isLoading) {
   wrap.classList.toggle("is-loading", !!isLoading);
 }
 
+function setThumbAspectRatio(width, height) {
+  const wrap = document.getElementById("thumbWrap");
+  if (!wrap) return;
+
+  const w = Number(width);
+  const h = Number(height);
+
+  if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
+    wrap.style.setProperty("--thumb-aspect-ratio", `${w} / ${h}`);
+  } else {
+    wrap.style.removeProperty("--thumb-aspect-ratio");
+  }
+}
+
 function showThumb(show) {
   const wrap = document.getElementById("thumbWrap");
   if (!wrap) return;
@@ -104,6 +122,45 @@ async function fetchVerify(proofId) {
   const res = await fetch(url, { method: "GET" });
   const data = await res.json().catch(() => null);
   return { ok: res.ok, status: res.status, data };
+}
+
+function initReportForm(params) {
+  const form = document.getElementById("reportForm");
+  const iframe = document.getElementById("report_iframe");
+  const statusBox = document.getElementById("reportStatus");
+  const proofInput = document.getElementById("reportProofInput");
+  const verifyUrlInput = document.getElementById("reportVerifyUrlInput");
+  const proofText = document.getElementById("reportProofId");
+
+  if (!form || !iframe || !statusBox) return;
+
+  const canonicalVerifyUrl = buildCanonicalVerifyUrl(params.requestedPath);
+
+  if (proofInput) proofInput.value = params.proofId || "";
+  if (verifyUrlInput) verifyUrlInput.value = canonicalVerifyUrl;
+  if (proofText) proofText.textContent = params.proofId || "Unavailable";
+
+  let submitted = false;
+
+  form.addEventListener("submit", function () {
+    submitted = true;
+    statusBox.textContent = "Sending report...";
+    statusBox.className = "reportStatus is-visible";
+  });
+
+  iframe.addEventListener("load", function () {
+    if (!submitted) return;
+    submitted = false;
+
+    statusBox.textContent =
+      "Your report was sent successfully. Thanks — we’ll review it as soon as possible.";
+    statusBox.className = "reportStatus is-visible is-success";
+
+    form.reset();
+
+    if (proofInput) proofInput.value = params.proofId || "";
+    if (verifyUrlInput) verifyUrlInput.value = canonicalVerifyUrl;
+  });
 }
 
 // Mapper reason_code -> menneskelig tekst
@@ -132,6 +189,8 @@ function humanReason(reason) {
     new URL(requestedPath, window.location.origin).pathname
   );
 
+  initReportForm({ proofId, requestedPath });
+
   if (!proofId) {
     setBadge("INVALID", "bad");
     setStatus("Ugyldig verify-lenke", "bad", "Missing or malformed proof id");
@@ -156,12 +215,20 @@ function humanReason(reason) {
   const thumbUrl = data?.thumb?.url;
 
   if (thumbUrl) {
-    img.onload = () => setThumbLoading(false);
-    img.onerror = () => setThumbLoading(false);
+    setThumbAspectRatio(data?.photo?.width, data?.photo?.height);
+    img.onload = () => {
+      setThumbAspectRatio(img.naturalWidth, img.naturalHeight);
+      setThumbLoading(false);
+    };
+    img.onerror = () => {
+      setThumbAspectRatio(null, null);
+      setThumbLoading(false);
+    };
     img.src = thumbUrl;
     showThumb(true);
   } else {
     // ingen thumb -> skjul hero helt, så siden ser “ferdig” ut
+    setThumbAspectRatio(null, null);
     setThumbLoading(false);
     showThumb(false);
   }

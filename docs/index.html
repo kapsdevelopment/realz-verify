@@ -74,12 +74,96 @@
         <summary>Detaljer</summary>
         <pre id="raw" class="raw"></pre>
       </details>
+
+      <details class="reportBlock" id="reportBlock">
+        <summary class="reportToggle">Report this image</summary>
+        <div class="reportInner">
+          <p class="reportLead">
+            Use this if you believe this public image or verify result should be reviewed for abuse, illegality, or rights violations.
+          </p>
+
+          <div class="reportMeta">
+            <span>Proof ID</span>
+            <code id="reportProofId">-</code>
+          </div>
+
+          <div id="reportStatus" class="reportStatus" aria-live="polite"></div>
+
+          <iframe
+            id="report_iframe"
+            name="report_hidden_iframe"
+            style="display:none;"
+            title="Hidden report submit target"
+          ></iframe>
+
+          <form
+            id="reportForm"
+            class="reportForm"
+            action="https://formcarry.com/s/arQi40sZeJz"
+            method="POST"
+            accept-charset="UTF-8"
+            target="report_hidden_iframe"
+          >
+            <input type="text" name="company" tabindex="-1" autocomplete="off" style="display:none" />
+            <input type="hidden" name="product" value="Realz" />
+            <input type="hidden" name="source" value="Realz_Verify" />
+            <input type="hidden" name="subject" value="Report public content" />
+            <input type="hidden" name="proof_id" id="reportProofInput" value="" />
+            <input type="hidden" name="verify_url" id="reportVerifyUrlInput" value="" />
+
+            <div class="reportGrid">
+              <label class="reportField">
+                <span>Name</span>
+                <input id="reportName" name="name" type="text" placeholder="Your name" required />
+              </label>
+
+              <label class="reportField">
+                <span>Email</span>
+                <input id="reportEmail" name="email" type="email" placeholder="you@example.com" required />
+              </label>
+            </div>
+
+            <label class="reportField">
+              <span>Reason</span>
+              <select id="reportReason" name="reason" required>
+                <option>Illegal content</option>
+                <option>Non-consensual intimate content</option>
+                <option>Privacy or rights violation</option>
+                <option>Harassment or abuse</option>
+                <option>Other</option>
+              </select>
+            </label>
+
+            <label class="reportField">
+              <span>Message</span>
+              <textarea
+                id="reportMessage"
+                name="message"
+                rows="5"
+                placeholder="Explain briefly why this page should be reviewed."
+                required
+              ></textarea>
+            </label>
+
+            <div class="reportActions">
+              <button class="reportButton" type="submit">Send report</button>
+              <a class="reportLink" href="https://realz.me/support/" target="_blank" rel="noreferrer">Open full support</a>
+            </div>
+
+            <p class="reportHint">
+              Please do not include unnecessary sensitive personal information. If possible, describe what is wrong with this page and why it should be reviewed.
+            </p>
+          </form>
+        </div>
+      </details>
     </section>
 
     <footer class="foot">
       <span>© Realz</span>
       <span class="sep">•</span>
       <a href="https://realz.me/" rel="nofollow">Home</a>
+      <span class="sep">•</span>
+      <a href="https://realz.me/support/" rel="nofollow">Support</a>
     </footer>
   </main>
 
