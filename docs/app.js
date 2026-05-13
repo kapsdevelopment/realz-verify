@@ -41,6 +41,18 @@ function safeSetText(id, value) {
   el.textContent = value ?? "-";
 }
 
+function setVisible(id, isVisible) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.hidden = !isVisible;
+}
+
+function setRowVisible(id, isVisible) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle("is-hidden", !isVisible);
+}
+
 function setSubtitle(text) {
   const el = document.getElementById("subtitle");
   if (!el) return;
@@ -117,6 +129,56 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
+function titleCaseFromSnake(value) {
+  return String(value || "")
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatAppCheck(data) {
+  const attestation = data?.crypto?.payload?.trust?.attestation;
+  const verdict = attestation?.verdict;
+  const provider = attestation?.provider;
+
+  if (!verdict) return "Not included";
+  if (provider) return `${titleCaseFromSnake(verdict)} (${titleCaseFromSnake(provider)})`;
+  return titleCaseFromSnake(verdict);
+}
+
+function formatSignature(data) {
+  const alg = data?.crypto?.alg;
+  const keyId = data?.crypto?.key_id;
+
+  if (alg && keyId) return `${alg}, key ${keyId}`;
+  if (alg) return alg;
+  return "Not included";
+}
+
+function setProofDetails(data) {
+  const hasDetails = Boolean(data?.crypto || data?.issued_at_utc);
+  setVisible("proofDetails", hasDetails);
+
+  if (!hasDetails) return;
+
+  safeSetText("issuedAt", formatUtc(data?.issued_at_utc));
+  safeSetText("appCheck", formatAppCheck(data));
+  safeSetText("signatureDetails", formatSignature(data));
+  safeSetText(
+    "originalHash",
+    data?.crypto?.payload?.hashes?.original_sha256 || "Not included"
+  );
+
+  const anchor = data?.crypto?.payload?.anchor;
+  const anchorStatus = anchor?.status;
+  const hasExternalAnchor = Boolean(anchorStatus && anchorStatus !== "none");
+  setRowVisible("anchorRow", hasExternalAnchor);
+  if (hasExternalAnchor) {
+    safeSetText("anchorStatus", titleCaseFromSnake(anchorStatus));
+  }
+}
+
 async function fetchVerify(proofId) {
   const url = `${VERIFY_ENDPOINT}?proof_id=${encodeURIComponent(proofId)}`;
   const res = await fetch(url, { method: "GET" });
@@ -183,6 +245,7 @@ function humanReason(reason) {
   setThumbLoading(true);
   hideThumbOverlay();
   showThumb(true);
+  setProofDetails(null);
 
   const requestedPath = getRequestedPath();
   const proofId = getProofIdFromPath(
@@ -199,16 +262,14 @@ function humanReason(reason) {
     safeSetText("capturedAt", "-");
     safeSetText("trust", "Invalid");
     showThumb(false);
-    document.getElementById("raw").textContent = "";
+    setProofDetails(null);
     return;
   }
 
   safeSetText("proofId", proofId);
 
   const { ok, status, data } = await fetchVerify(proofId);
-
-  // Fyll raw uansett (hjelper debugging)
-  document.getElementById("raw").textContent = JSON.stringify(data, null, 2) || "";
+  setProofDetails(data);
 
   // thumb
   const img = document.getElementById("thumb");

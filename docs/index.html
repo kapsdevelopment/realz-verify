@@ -70,9 +70,33 @@
         </div>
       </div>
 
-      <details class="details">
-        <summary>Detaljer</summary>
-        <pre id="raw" class="raw"></pre>
+      <details class="details" id="proofDetails" hidden>
+        <summary>Proof details</summary>
+        <div class="detailRows">
+          <div class="detailRow">
+            <span>Proof created</span>
+            <code id="issuedAt">-</code>
+          </div>
+          <div class="detailRow">
+            <span>App check</span>
+            <code id="appCheck">-</code>
+          </div>
+          <div class="detailRow">
+            <span>Signature</span>
+            <code id="signatureDetails">-</code>
+          </div>
+          <div class="detailRow">
+            <span>Original SHA-256</span>
+            <code id="originalHash">-</code>
+          </div>
+          <div class="detailRow is-hidden" id="anchorRow">
+            <span>External anchor</span>
+            <code id="anchorStatus">-</code>
+          </div>
+        </div>
+        <p class="detailHint">
+          The public page shows a verification preview. It does not expose the private original image.
+        </p>
       </details>
 
       <details class="reportBlock" id="reportBlock">

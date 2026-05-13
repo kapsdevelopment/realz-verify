@@ -351,15 +351,46 @@ body{
   user-select:none;
 }
 
-.raw{
-  white-space: pre-wrap;
-  word-break: break-word;
-  background: rgba(0,0,0,0.22);
+.detailRows{
+  display:grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.detailRow{
+  display:grid;
+  grid-template-columns: minmax(108px, 0.42fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 11px 12px;
   border: 1px solid var(--stroke);
   border-radius: var(--radius-md);
-  padding: 12px;
-  overflow:auto;
-  margin-top: 10px;
+  background: rgba(0,0,0,0.18);
+}
+
+.detailRow.is-hidden{
+  display:none;
+}
+
+.detailRow span{
+  color: var(--muted2);
+  font-size: 12.5px;
+}
+
+.detailRow code{
+  min-width: 0;
+  color: rgba(232,234,240,0.92);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.detailHint{
+  margin: 10px 2px 0;
+  color: var(--muted2);
+  font-size: 12.5px;
+  line-height: 1.45;
 }
 
 .reportBlock{
@@ -568,5 +599,7 @@ body{
   .wordmark .name{ font-size: 21px; }
   .badge{ padding: 8px 11px; font-size: 12px; }
   .verifyPill{ padding: 10px 14px; font-size: 12.5px; }
+  .detailRow{ grid-template-columns: 1fr; }
+  .detailRow code{ text-align: left; }
   .reportGrid{ grid-template-columns: 1fr; }
 }
