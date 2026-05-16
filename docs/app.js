@@ -3,6 +3,7 @@ const SUPABASE_URL = "https://fikpcphonyjqbwibovyk.supabase.co";
 
 // 2) Edge function endpoint
 const VERIFY_ENDPOINT = `${SUPABASE_URL}/functions/v1/public_verify`;
+const PUBLIC_THUMB_BUCKET = "realz_public_thumbs";
 
 function getProofIdFromPath(pathname) {
   // forventer /v/{proof_id}
@@ -33,6 +34,44 @@ function getRequestedPath() {
 
 function buildCanonicalVerifyUrl(requestedPath) {
   return new URL(requestedPath, window.location.origin).toString();
+}
+
+function buildPublicStorageUrl(bucket, path) {
+  const encodedPath = String(path || "")
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${encodedPath}`;
+}
+
+function buildC2paSharedThumbnailUrl(proofId) {
+  return buildPublicStorageUrl(
+    PUBLIC_THUMB_BUCKET,
+    `content-credentials/${proofId}/shared-thumbnail.jpg`
+  );
+}
+
+async function publicObjectExists(url) {
+  try {
+    const res = await fetch(url, {
+      method: "HEAD",
+      cache: "no-store",
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function resolveBestThumbnailUrl(proofId, fallbackUrl) {
+  if (!proofId) return { url: fallbackUrl, contentCredentials: false };
+
+  const c2paUrl = buildC2paSharedThumbnailUrl(proofId);
+  if (await publicObjectExists(c2paUrl)) {
+    return { url: c2paUrl, contentCredentials: true };
+  }
+
+  return { url: fallbackUrl, contentCredentials: false };
 }
 
 function safeSetText(id, value) {
@@ -273,10 +312,15 @@ function humanReason(reason) {
 
   // thumb
   const img = document.getElementById("thumb");
-  const thumbUrl = data?.thumb?.url;
+  const fallbackThumbUrl = data?.thumb?.url;
+  const thumb = fallbackThumbUrl
+    ? await resolveBestThumbnailUrl(proofId, fallbackThumbUrl)
+    : { url: null, contentCredentials: false };
+  const thumbUrl = thumb.url;
 
   if (thumbUrl) {
     setThumbAspectRatio(data?.photo?.width, data?.photo?.height);
+    img.dataset.contentCredentials = thumb.contentCredentials ? "true" : "false";
     img.onload = () => {
       setThumbAspectRatio(img.naturalWidth, img.naturalHeight);
       setThumbLoading(false);
